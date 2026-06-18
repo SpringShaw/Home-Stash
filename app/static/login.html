@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>登录 - Home Stash</title>
+<script src="/static/lib/tailwindcss.js"></script>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+</style>
+</head>
+<body class="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 min-h-screen flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm">
+    <div class="text-center mb-8">
+      <!-- 头像区域：圆形，带阴影 -->
+      <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 shadow-lg overflow-hidden ring-4 ring-white flex items-center justify-center">
+        <span class="text-4xl">🏠</span>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-800">家庭耗材库存管理</h1>
+      <p class="text-sm text-gray-500 mt-1">Home Stash</p>
+    </div>
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">账号</label>
+        <input type="text" name="account" required
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+          placeholder="请输入账号">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">密码</label>
+        <input type="password" name="password" required
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+          placeholder="请输入密码">
+      </div>
+      <div id="errorMsg" class="hidden text-red-500 text-sm text-center"></div>
+      <button type="submit" id="submitBtn"
+        class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-3 rounded-lg font-medium hover:from-indigo-600 hover:to-purple-700 transition active:scale-95">
+        登 录
+      </button>
+    </form>
+    <div class="mt-6 text-center text-xs text-gray-400">
+      💡 不同账户操作均会记录留痕
+    </div>
+    <div id="currentIp" class="mt-2 text-center text-xs text-gray-300"></div>
+  </div>
+<script>
+// 显示当前IP（方便配置白名单时查）
+(async function() {
+  try {
+    const r = await fetch('/api/trusted-check');
+    const data = await r.json();
+    if (data.ip) {
+      document.getElementById('currentIp').textContent = '当前IP: ' + data.ip;
+    }
+    if (data.trusted) {
+      // 白名单IP，自动登录
+      location.href = '/';
+      return;
+    }
+  } catch(e) {}
+
+  const form = document.getElementById('loginForm');
+  const errorMsg = document.getElementById('errorMsg');
+  const btn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.classList.add('hidden');
+    btn.disabled = true;
+    btn.textContent = '登录中...';
+
+    const fd = new FormData(form);
+    try {
+      const res = await fetch('/api/login', { method: 'POST', body: fd });
+      if (res.ok) {
+        location.href = '/';
+      } else {
+        const data = await res.json();
+        errorMsg.textContent = data.detail || '登录失败';
+        errorMsg.classList.remove('hidden');
+      }
+    } catch (err) {
+      errorMsg.textContent = '网络错误';
+      errorMsg.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '登 录';
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+# Runtime data
+data/
+logs/
+backups/
+deploy_logs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Environment
+.env
+.env.local
+
+# 临时脚本
+fix_db.py
+fix_items.py
+
+# 调试文件
+debug.html
+
+# 敏感图片
+*.jpg
+*.png
+*.gif
+*.webp
+
+# 错误目录名
+{data,logs,backups}/

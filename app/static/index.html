@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Home Stash 家庭耗材库存</title>
+<script src="/static/lib/tailwindcss.js"></script>
+<script src="/static/lib/vue.global.prod.js"></script>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+.tab-active { color: #6366f1; }
+.tab-active .tab-icon { transform: scale(1.15); }
+[v-cloak] { display: none; }
+.fade-enter-active, .fade-leave-active { transition: opacity .2s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+img { -webkit-user-drag: none; user-select: none; }
+</style>
+</head>
+<body class="bg-gray-50 min-h-screen pb-20">
+<div id="app">
+  <!-- 顶部栏 -->
+  <header class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white sticky top-0 z-30 shadow-md">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">🏠</span>
+        <div>
+          <h1 class="text-lg font-bold leading-tight">Home Stash</h1>
+          <p class="text-xs opacity-90">{{ currentTabName }}</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <span class="text-xs sm:text-sm font-medium">{{ user.name }}</span>
+        <span v-if="trustedIp" class="text-[10px] bg-green-400/25 px-1.5 py-0.5 rounded" title="设备IP免密登录">🔓</span>
+        <button @click="logout" class="text-xs bg-white/15 hover:bg-white/30 px-2 py-0.5 rounded transition">退出</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 py-4">
+    <!-- 首页仪表盘 -->
+    <div v-if="currentTab === 'dashboard'">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div class="bg-white p-4 rounded-xl shadow-sm">
+          <div class="text-xs text-gray-500">耗材总数</div>
+          <div class="text-2xl font-bold mt-1">{{ stats.total_items || 0 }}</div>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm">
+          <div class="text-xs text-gray-500">分类数</div>
+          <div class="text-2xl font-bold mt-1">{{ stats.category_count || 0 }}</div>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm" :class="stats.low_stock_count > 0 ? 'ring-2 ring-red-300' : ''">
+          <div class="text-xs text-gray-500">⚠️ 低库存</div>
+          <div class="text-2xl font-bold mt-1" :class="stats.low_stock_count > 0 ? 'text-red-500' : ''">
+            {{ stats.low_stock_count || 0 }}
+          </div>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm">
+          <div class="text-xs text-gray-500">本月消费</div>
+          <div class="text-2xl font-bold mt-1">¥{{ stats.month_spend || 0 }}</div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold text-gray-800">🔥 低库存提醒</h2>
+          <button v-if="user.role === 'admin'" @click="triggerNotify"
+            class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-200">
+            📨 立即推送微信
+          </button>
+        </div>
+        <div v-if="lowItems.length === 0" class="text-center py-8 text-gray-400">
+          🎉 库存充足，暂无低库存物品
+        </div>
+        <div v-else class="space-y-2">
+          <div v-for="item in lowItems" :key="item.id"
+            class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <span class="text-2xl">{{ item.category_icon }}</span>
+              <div class="min-w-0 flex-1">
+                <div class="font-medium truncate">{{ item.name }}</div>
+                <div class="text-xs text-gray-500">{{ item.category_name }}</div>
+              </div>
+            </div>
+            <div class="text-right ml-2">
+              <div class="font-bold text-red-500">{{ item.stock }}/{{ item.min_stock }}{{ item.unit }}</div>
+              <button @click="addToShopping(item)" class="text-xs text-indigo-600 hover:underline">+ 购物清单</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm p-4">
+        <h2 class="font-bold text-gray-800 mb-3">📊 近30天分类消费</h2>
+        <div class="space-y-2">
+          <div v-for="cat in stats.category_spend || []" :key="cat.name" class="flex items-center justify-between">
+            <span class="text-sm">{{ cat.icon }} {{ cat.name }}</span>
+            <span class="font-medium text-sm">¥{{ Number(cat.total).toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 耗材管理 -->
+    <div v-if="currentTab === 'items'">
+      <div class="flex items-center gap-2 overflow-x-auto pt-1.5 pb-2 mb-3 -mx-4 px-4">
+        <button @click="filterCategory = null" :class="filterCategory === null ? 'bg-indigo-500 text-white' : 'bg-white text-gray-700'"
+          class="px-3 py-1.5 rounded-full text-sm whitespace-nowrap shadow-sm">
+          全部 ({{ items.length }})
+        </button>
+        <button v-for="cat in categories" :key="cat.id" @click="filterCategory = cat.id"
+          :class="filterCategory === cat.id ? 'bg-indigo-500 text-white' : 'bg-white text-gray-700'"
+          class="px-3 py-1.5 rounded-full text-sm whitespace-nowrap shadow-sm relative">
+          {{ cat.icon }} {{ cat.name }}
+          <span v-if="cat.low_count > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{{ cat.low_count }}</span>
+        </button>
+      </div>
+      <div class="flex gap-2 mb-3">
+        <button @click="showAddItem = true"
+          class="flex-1 bg-indigo-500 text-white py-2 rounded-lg shadow-sm hover:bg-indigo-600">
+          ➕ 添加耗材
+        </button>
+        <button @click="showAddCategory = true"
+          class="px-4 bg-white text-gray-700 py-2 rounded-lg shadow-sm hover:bg-gray-50">
+          📁 新增分类
+        </button>
+      </div>
+      <div class="space-y-2">
+        <div v-for="item in filteredItems" :key="item.id"
+          class="bg-white rounded-xl shadow-sm p-3"
+          :class="item.stock < item.min_stock ? 'ring-1 ring-red-200' : ''">
+          <div class="flex items-center gap-3">
+            <span class="text-3xl">{{ item.category_icon }}</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <div class="font-medium truncate">{{ item.name }}</div>
+                <span v-if="item.important" class="text-xs">⭐</span>
+              </div>
+              <div class="text-xs text-gray-500">
+                {{ item.category_name }} · 阈值 {{ item.min_stock }}{{ item.unit }}
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="font-bold text-lg" :class="item.stock < item.min_stock ? 'text-red-500' : 'text-gray-800'">
+                {{ item.stock }}{{ item.unit }}
+              </div>
+              <div class="flex gap-1 mt-1">
+                <button @click="changeStock(item, -1)"
+                  class="w-7 h-7 bg-gray-100 hover:bg-gray-200 rounded text-sm font-bold">−</button>
+                <button @click="changeStock(item, 1)"
+                  class="w-7 h-7 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded text-sm font-bold">+</button>
+                <button @click="openPurchase(item)"
+                  class="w-7 h-7 bg-green-100 hover:bg-green-200 text-green-700 rounded text-sm">🛒</button>
+                <button @click="addToShopping(item)"
+                  class="w-7 h-7 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded text-sm text-xs">📋</button>
+                <button @click="editItem(item)"
+                  class="w-7 h-7 bg-gray-100 hover:bg-gray-200 rounded text-sm">✏️</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="filteredItems.length === 0" class="text-center py-12 text-gray-400">
+          暂无耗材，点击上方按钮添加
+        </div>
+      </div>
+    </div>
+
+    <!-- 购物清单 -->
+    <div v-if="currentTab === 'shopping'">
+      <div class="bg-white rounded-xl shadow-sm p-4 mb-3">
+        <h2 class="font-bold text-gray-800 mb-3">🛒 购物清单</h2>
+        <div v-if="shoppingList.length === 0" class="text-center py-8 text-gray-400">
+          清单为空，去耗材页面把低库存物品加进来吧
+        </div>
+        <div v-else class="space-y-2">
+          <div v-for="s in shoppingList" :key="s.id"
+            class="flex items-center justify-between p-3 rounded-lg"
+            :class="s.done ? 'bg-gray-50 opacity-60' : 'bg-amber-50'">
+            <div class="flex items-center gap-2 flex-1">
+              <input type="checkbox" :checked="s.done" @change="markShoppingDone(s)" class="w-5 h-5">
+              <div :class="s.done ? 'line-through' : ''">
+                <div class="font-medium">{{ s.item_name || s.custom_name }}</div>
+                <div class="text-xs text-gray-500">
+                  数量 {{ s.quantity }}{{ s.unit || '' }} · {{ s.user_name }} · {{ formatTime(s.created_at) }}
+                </div>
+              </div>
+            </div>
+            <button @click="deleteShopping(s)" class="text-red-400 hover:text-red-600 text-sm">删除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 采购记录 -->
+    <div v-if="currentTab === 'records'">
+      <div class="bg-white rounded-xl shadow-sm p-4 mb-3">
+        <h2 class="font-bold text-gray-800 mb-3">📝 近期采购记录</h2>
+        <div v-if="purchases.length === 0" class="text-center py-8 text-gray-400">暂无采购记录</div>
+        <div v-else class="space-y-2">
+          <div v-for="p in purchases" :key="p.id" class="border-b border-gray-100 pb-2">
+            <div class="flex items-center justify-between">
+              <span class="font-medium">{{ p.item_name }}</span>
+              <span class="text-sm">
+                <span class="text-green-600">+{{ p.quantity }}{{ p.unit }}</span>
+                <span v-if="p.price > 0" class="text-gray-500 ml-2">¥{{ p.price }}</span>
+              </span>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">
+              {{ p.category_name }} · {{ p.user_name }} · {{ formatTime(p.created_at) }}
+              <span v-if="p.note">· {{ p.note }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作日志 -->
+    <div v-if="currentTab === 'logs'">
+      <div class="bg-white rounded-xl shadow-sm p-4">
+        <h2 class="font-bold text-gray-800 mb-3">📋 操作日志</h2>
+        <div class="space-y-2">
+          <div v-for="log in logs" :key="log.id" class="border-b border-gray-100 pb-2 text-sm">
+            <div class="flex items-center justify-between">
+              <span class="font-medium">
+                <span class="px-2 py-0.5 rounded text-xs"
+                  :class="log.user_name === 'Mr.X' ? 'bg-indigo-100 text-indigo-700' : 'bg-pink-100 text-pink-700'">
+                  {{ log.user_name }}
+                </span>
+                {{ log.action }}
+                <span v-if="log.item_name" class="text-gray-700">「{{ log.item_name }}」</span>
+              </span>
+              <span class="text-xs text-gray-400">{{ formatTime(log.created_at) }}</span>
+            </div>
+            <div v-if="log.old_value || log.new_value" class="text-xs text-gray-500 mt-1">
+              <span v-if="log.old_value">{{ log.old_value }}</span>
+              <span v-if="log.old_value && log.new_value"> → </span>
+              <span v-if="log.new_value">{{ log.new_value }}</span>
+              <span v-if="log.detail" class="ml-2">{{ log.detail }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⚙️ 管理设置（仅管理员） -->
+    <div v-if="currentTab === 'settings' && user.role === 'admin'">
+      <!-- 账号管理（含IP绑定） -->
+      <div class="bg-white rounded-xl shadow-sm p-4 mb-3">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold text-gray-800">👥 账号管理</h2>
+          <button @click="openAccountForm()" class="text-xs bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600">+ 新增账号</button>
+        </div>
+        <div class="space-y-2">
+          <div v-for="a in accounts" :key="a.id" class="flex flex-col p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="font-medium">{{ a.name }}</span>
+                <span class="text-xs ml-2 px-2 py-0.5 rounded"
+                  :class="a.role === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-600'">
+                  {{ a.role === 'admin' ? '管理员' : '普通用户' }}
+                </span>
+                <div class="text-xs text-gray-500 mt-1">ID: {{ a.id }}</div>
+              </div>
+              <div class="flex gap-1">
+                <button @click="openAccountForm(a)" class="text-xs bg-white border px-2 py-1 rounded hover:bg-gray-100">编辑</button>
+                <button v-if="a.id !== user.id" @click="deleteAccount(a)" class="text-xs bg-white border border-red-200 text-red-500 px-2 py-1 rounded hover:bg-red-50">删除</button>
+              </div>
+            </div>
+            <div v-if="a.bound_ips" class="text-xs text-gray-400 mt-1 ml-1">
+              🔓 绑定IP: <span class="font-mono">{{ a.bound_ips }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 邮件通知设置 -->
+      <div class="bg-white rounded-xl shadow-sm p-4 mb-3">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold text-gray-800">📨 邮件通知设置</h2>
+          <button @click="testEmail" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200">测试发送</button>
+        </div>
+        <div class="space-y-3">
+          <div class="grid grid-cols-3 gap-2">
+            <div class="col-span-2">
+              <label class="text-sm text-gray-600">SMTP 服务器</label>
+              <input v-model="smtpConfig.server" class="w-full px-3 py-2 border rounded-lg mt-1 text-sm font-mono" placeholder="smtp.163.com">
+            </div>
+            <div>
+              <label class="text-sm text-gray-600">端口</label>
+              <input v-model="smtpConfig.port" class="w-full px-3 py-2 border rounded-lg mt-1 text-sm font-mono" placeholder="465">
+            </div>
+          </div>
+          <div>
+            <label class="text-sm text-gray-600">发件邮箱</label>
+            <input v-model="smtpConfig.from_addr" class="w-full px-3 py-2 border rounded-lg mt-1 text-sm font-mono" placeholder="xxx@163.com">
+          </div>
+          <div>
+            <label class="text-sm text-gray-600">SMTP 授权码</label>
+            <input v-model="smtpConfig.auth_code" type="password" class="w-full px-3 py-2 border rounded-lg mt-1 text-sm font-mono" placeholder="SMTP授权码/密码">
+          </div>
+          <div>
+            <label class="text-sm text-gray-600">接收邮箱</label>
+            <input v-model="smtpConfig.to_addr" class="w-full px-3 py-2 border rounded-lg mt-1 text-sm font-mono" placeholder="收件人邮箱">
+          </div>
+        </div>
+        <button @click="saveSmtpConfig" :disabled="savingSmtp"
+          class="mt-4 w-full py-2 rounded-xl font-medium text-white transition"
+          :class="savingSmtp ? 'bg-gray-400' : 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700'">
+          {{ savingSmtp ? '保存中...' : '💾 保存邮件配置' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- 非管理员提示 -->
+    <div v-if="currentTab === 'settings' && user.role !== 'admin'" class="text-center py-12 text-gray-400">
+      ⚙️ 仅管理员可访问系统设置
+    </div>
+  </main>
+
+  <!-- 底部TabBar -->
+  <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 shadow-lg z-30">
+    <div class="max-w-4xl mx-auto" :class="user.role === 'admin' ? 'grid-cols-6' : 'grid-cols-5'" style="display:grid">
+      <button v-for="tab in visibleTabs" :key="tab.id" @click="switchTab(tab.id)"
+        class="py-2 flex flex-col items-center gap-0.5 transition"
+        :class="currentTab === tab.id ? 'tab-active' : 'text-gray-500'">
+        <span class="text-xl tab-icon transition">{{ tab.icon }}</span>
+        <span class="text-xs">{{ tab.name }}</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 添加耗材弹窗 -->
+  <div v-if="showAddItem" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" @click.self="showAddItem = false">
+    <div class="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+      <h3 class="text-lg font-bold mb-4">{{ editingItem ? '编辑耗材' : '添加耗材' }}</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="text-sm text-gray-600">名称</label>
+          <input v-model="newItem.name" class="w-full px-3 py-2 border rounded-lg mt-1" placeholder="如：海飞丝洗发水">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">分类</label>
+          <select v-model="newItem.category_id" class="w-full px-3 py-2 border rounded-lg mt-1">
+            <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.icon }} {{ c.name }}</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-sm text-gray-600">当前库存</label>
+            <input v-model.number="newItem.stock" type="number" min="0" step="0.1" class="w-full px-3 py-2 border rounded-lg mt-1" :disabled="!!editingItem">
+          </div>
+          <div>
+            <label class="text-sm text-gray-600">最低阈值</label>
+            <input v-model.number="newItem.min_stock" type="number" min="0" step="0.1" class="w-full px-3 py-2 border rounded-lg mt-1">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-sm text-gray-600">单位</label>
+            <input v-model="newItem.unit" class="w-full px-3 py-2 border rounded-lg mt-1" placeholder="个/瓶/包">
+          </div>
+          <div>
+            <label class="text-sm text-gray-600">参考单价(¥)</label>
+            <input v-model.number="newItem.price" type="number" min="0" step="0.01" class="w-full px-3 py-2 border rounded-lg mt-1">
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <input v-model="newItem.important" type="checkbox" id="important" :true-value="1" :false-value="0">
+          <label for="important" class="text-sm">⭐ 标记为重要（低库存立即推送）</label>
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">备注</label>
+          <textarea v-model="newItem.note" rows="2" class="w-full px-3 py-2 border rounded-lg mt-1"></textarea>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-5">
+        <button v-if="editingItem && user.role === 'admin'" @click="deleteItemConfirm" class="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg">删除</button>
+        <button @click="closeAddItem" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg">取消</button>
+        <button @click="saveItem" class="flex-1 px-3 py-2 bg-indigo-500 text-white rounded-lg">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新增分类弹窗 -->
+  <div v-if="showAddCategory" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" @click.self="showAddCategory = false">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6">
+      <h3 class="text-lg font-bold mb-4">新增分类</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="text-sm text-gray-600">图标 emoji</label>
+          <input v-model="newCategory.icon" class="w-full px-3 py-2 border rounded-lg mt-1" placeholder="📦">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">分类名称</label>
+          <input v-model="newCategory.name" class="w-full px-3 py-2 border rounded-lg mt-1">
+        </div>
+      </div>
+      <div class="flex gap-2 mt-5">
+        <button @click="showAddCategory = false" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg">取消</button>
+        <button @click="saveCategory" class="flex-1 px-3 py-2 bg-indigo-500 text-white rounded-lg">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 采购入库弹窗 -->
+  <div v-if="showPurchase" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" @click.self="showPurchase = false">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6">
+      <h3 class="text-lg font-bold mb-4">🛒 采购入库</h3>
+      <div class="text-sm text-gray-500 mb-3">{{ purchaseItem?.name }}（当前 {{ purchaseItem?.stock }}{{ purchaseItem?.unit }}）</div>
+      <div class="space-y-3">
+        <div>
+          <label class="text-sm text-gray-600">购入数量</label>
+          <input v-model.number="purchaseData.delta" type="number" min="0.1" step="0.1" class="w-full px-3 py-2 border rounded-lg mt-1">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">单价(¥) 可选</label>
+          <input v-model.number="purchaseData.price" type="number" min="0" step="0.01" class="w-full px-3 py-2 border rounded-lg mt-1">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">备注</label>
+          <input v-model="purchaseData.note" class="w-full px-3 py-2 border rounded-lg mt-1" placeholder="如：京东自营">
+        </div>
+      </div>
+      <div class="flex gap-2 mt-5">
+        <button @click="showPurchase = false" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg">取消</button>
+        <button @click="confirmPurchase" class="flex-1 px-3 py-2 bg-green-500 text-white rounded-lg">确认入库</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 账号编辑弹窗 -->
+  <div v-if="showAccountForm" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" @click.self="showAccountForm = false">
+    <div class="bg-white rounded-2xl w-full max-w-sm p-6">
+      <h3 class="text-lg font-bold mb-4">{{ editingAccount ? '编辑账号' : '新增账号' }}</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="text-sm text-gray-600">账号ID</label>
+          <input v-model="accountForm.id" class="w-full px-3 py-2 border rounded-lg mt-1" :disabled="!!editingAccount"
+            placeholder="如: 手机号/QQ号">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">用户名</label>
+          <input v-model="accountForm.name" class="w-full px-3 py-2 border rounded-lg mt-1" placeholder="显示名称">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">{{ editingAccount ? '新密码（留空不改）' : '密码' }}</label>
+          <input v-model="accountForm.password" type="password" class="w-full px-3 py-2 border rounded-lg mt-1"
+            :placeholder="editingAccount ? '留空则不修改密码' : '设置密码'">
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">角色</label>
+          <select v-model="accountForm.role" class="w-full px-3 py-2 border rounded-lg mt-1">
+            <option value="admin">管理员</option>
+            <option value="user">普通用户</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-sm text-gray-600">绑定IP（留空=全部需密码登录）</label>
+          <input v-model="accountForm.bound_ips" class="w-full px-3 py-2 border rounded-lg mt-1 font-mono text-sm"
+            placeholder="如: 192.168.31.42, 192.168.31.100">
+          <div v-if="visitorIp" class="text-xs text-indigo-500 mt-1">
+            📱 当前设备IP: <span class="font-mono">{{ visitorIp }}</span>
+            <button v-if="visitorIp" @click="fillCurrentIp" class="ml-1 text-indigo-600 hover:underline">填入</button>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-5">
+        <button @click="showAccountForm = false" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg">取消</button>
+        <button @click="saveAccount" class="flex-1 px-3 py-2 bg-indigo-500 text-white rounded-lg">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <transition name="fade">
+    <div v-if="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm">
+      {{ toast }}
+    </div>
+  </transition>
+</div>
+
+<script>
+const { createApp, ref, computed, onMounted } = Vue;
+
+createApp({
+  setup() {
+    const user = ref({ id: '', name: '', role: '' });
+    const trustedIp = ref(false);
+    const currentTab = ref('dashboard');
+    const allTabs = [
+      { id: 'dashboard', name: '首页', icon: '🏠' },
+      { id: 'items', name: '耗材', icon: '📦' },
+      { id: 'shopping', name: '购物', icon: '🛒' },
+      { id: 'records', name: '记录', icon: '📝' },
+      { id: 'logs', name: '日志', icon: '📋' },
+      { id: 'settings', name: '设置', icon: '⚙️', admin: true }
+    ];
+    const visibleTabs = computed(() => {
+      if (user.value.role === 'admin') return allTabs;
+      return allTabs.filter(t => !t.admin);
+    });
+    const currentTabName = computed(() => allTabs.find(t => t.id === currentTab.value)?.name || '');
+
+    const stats = ref({});
+    const categories = ref([]);
+    const items = ref([]);
+    const shoppingList = ref([]);
+    const purchases = ref([]);
+    const logs = ref([]);
+    const filterCategory = ref(null);
+
+    const showAddItem = ref(false);
+    const showAddCategory = ref(false);
+    const showPurchase = ref(false);
+    const editingItem = ref(null);
+    const newItem = ref({ name: '', category_id: null, stock: 0, min_stock: 1, unit: '个', price: 0, important: 0, note: '' });
+    const newCategory = ref({ icon: '📦', name: '' });
+    const purchaseItem = ref(null);
+    const purchaseData = ref({ delta: 1, price: 0, note: '' });
+
+    // 管理设置
+    const accounts = ref([]);
+    const visitorIp = ref('');
+    const smtpConfig = ref({ server: '', port: '465', from_addr: '', auth_code: '', to_addr: '' });
+    const savingSmtp = ref(false);
+    const showAccountForm = ref(false);
+    const editingAccount = ref(null);
+    const accountForm = ref({ id: '', name: '', password: '', role: 'user', bound_ips: '' });
+
+    const toast = ref('');
+    const showToast = (msg) => {
+      toast.value = msg;
+      setTimeout(() => toast.value = '', 2000);
+    };
+
+    const lowItems = computed(() => items.value.filter(i => i.stock < i.min_stock));
+    const filteredItems = computed(() => {
+      if (filterCategory.value === null) return items.value;
+      return items.value.filter(i => i.category_id === filterCategory.value);
+    });
+
+    const formatTime = (s) => {
+      if (!s) return '';
+      const d = new Date(s.replace(' ', 'T') + (s.includes('Z') ? '' : ''));
+      const diff = Date.now() - d.getTime();
+      if (diff < 60000) return '刚刚';
+      if (diff < 3600000) return Math.floor(diff/60000) + '分钟前';
+      if (diff < 86400000) return Math.floor(diff/3600000) + '小时前';
+      if (diff < 7*86400000) return Math.floor(diff/86400000) + '天前';
+      return d.toLocaleDateString();
+    };
+
+    const api = async (url, opts = {}) => {
+      const res = await fetch(url, { credentials: 'include', ...opts });
+      if (res.status === 401) {
+        location.href = '/login';
+        return null;
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({detail: 'request failed'}));
+        showToast('❌ ' + (err.detail || '操作失败'));
+        throw new Error(err.detail);
+      }
+      return res.json();
+    };
+
+    const loadMe = async () => {
+      try {
+        const me = await api('/api/me');
+        if (me) user.value = me;
+      } catch (e) {}
+      try {
+        const chk = await api('/api/trusted-check');
+        if (chk && chk.trusted) trustedIp.value = true;
+      } catch (e) {}
+    };
+    const loadStats = async () => stats.value = await api('/api/stats') || {};
+    const loadCategories = async () => categories.value = await api('/api/categories') || [];
+    const loadItems = async () => items.value = await api('/api/items') || [];
+    const loadShopping = async () => shoppingList.value = await api('/api/shopping') || [];
+    const loadPurchases = async () => purchases.value = await api('/api/purchases?days=90') || [];
+    const loadLogs = async () => logs.value = await api('/api/logs?limit=200') || [];
+
+    const loadSettings = async () => {
+      if (user.value.role !== 'admin') return;
+      const [accts, vip, s] = await Promise.all([
+        api('/api/admin/accounts'),
+        api('/api/admin/visitor-ip'),
+        api('/api/admin/settings')
+      ]);
+      if (accts) accounts.value = accts;
+      if (vip) visitorIp.value = vip.ip;
+      if (s) {
+        smtpConfig.value = {
+          server: s.smtp_server || '',
+          port: s.smtp_port || '465',
+          from_addr: s.smtp_from || '',
+          auth_code: s.smtp_auth_code || '',
+          to_addr: s.smtp_to || ''
+        };
+      }
+    };
+
+    const saveSmtpConfig = async () => {
+      savingSmtp.value = true;
+      try {
+        await api('/api/admin/settings', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            smtp_server: smtpConfig.value.server,
+            smtp_port: smtpConfig.value.port,
+            smtp_from: smtpConfig.value.from_addr,
+            smtp_auth_code: smtpConfig.value.auth_code,
+            smtp_to: smtpConfig.value.to_addr
+          })
+        });
+        showToast('✅ 邮件配置已保存');
+      } catch(e) {}
+      savingSmtp.value = false;
+    };
+
+    const testEmail = async () => {
+      // 先保存配置
+      savingSmtp.value = true;
+      try {
+        await api('/api/admin/settings', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            smtp_server: smtpConfig.value.server,
+            smtp_port: smtpConfig.value.port,
+            smtp_from: smtpConfig.value.from_addr,
+            smtp_auth_code: smtpConfig.value.auth_code,
+            smtp_to: smtpConfig.value.to_addr
+          })
+        });
+      } catch(e) { savingSmtp.value = false; return; }
+      savingSmtp.value = false;
+      // 触发低库存检查（含邮件发送）
+      const r = await api('/api/notify/check', { method: 'POST' });
+      if (r) {
+        if (r.low_count === 0) showToast('✅ 测试邮件已发送（无低库存）');
+        else if (r.sent) showToast(`✅ 已发送低库存提醒邮件 (${r.low_count}项)`);
+        else showToast('❌ 邮件发送失败，检查配置');
+      }
+    };
+
+    const fillCurrentIp = () => {
+      const ip = visitorIp.value;
+      if (!ip) return;
+      const current = accountForm.value.bound_ips;
+      const ips = current ? current.split(',').map(s => s.trim()).filter(Boolean) : [];
+      if (ips.includes(ip)) {
+        showToast('⚠️ 该IP已在该账号绑定列表中');
+        return;
+      }
+      ips.push(ip);
+      accountForm.value.bound_ips = ips.join(', ');
+      showToast(`✅ 已填入 ${ip}`);
+    };
+
+    const openAccountForm = (acct) => {
+      if (acct) {
+        editingAccount.value = acct;
+        accountForm.value = { id: acct.id, name: acct.name, password: '', role: acct.role, bound_ips: acct.bound_ips || '' };
+      } else {
+        editingAccount.value = null;
+        accountForm.value = { id: '', name: '', password: '', role: 'user', bound_ips: '' };
+      }
+      showAccountForm.value = true;
+    };
+
+    const saveAccount = async () => {
+      try {
+        await api('/api/admin/accounts', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(accountForm.value)
+        });
+        showToast('✅ 账号已保存');
+        showAccountForm.value = false;
+        loadSettings();
+      } catch(e) {}
+    };
+
+    const deleteAccount = async (acct) => {
+      if (!confirm(`确定删除账号「${acct.name}」？此操作不可撤销。`)) return;
+      try {
+        await api(`/api/admin/accounts/${acct.id}`, { method: 'DELETE' });
+        showToast('🗑 已删除');
+        loadSettings();
+      } catch(e) {}
+    };
+
+    const switchTab = async (id) => {
+      currentTab.value = id;
+      if (id === 'dashboard') { await loadStats(); await loadItems(); }
+      if (id === 'items') { await loadCategories(); await loadItems(); }
+      if (id === 'shopping') await loadShopping();
+      if (id === 'records') await loadPurchases();
+      if (id === 'logs') await loadLogs();
+      if (id === 'settings') await loadSettings();
+    };
+
+    const logout = async () => {
+      await api('/api/logout', { method: 'POST' });
+      location.href = '/login';
+    };
+
+    const changeStock = async (item, delta) => {
+      const r = await api(`/api/items/${item.id}/change`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ delta, note: '快捷调整' })
+      });
+      if (r) {
+        item.stock = r.new_stock;
+        showToast(delta > 0 ? '✅ 已增加' : '✅ 已减少');
+        loadStats();
+      }
+    };
+
+    const openPurchase = (item) => {
+      purchaseItem.value = item;
+      purchaseData.value = { delta: 1, price: item.price || 0, note: '' };
+      showPurchase.value = true;
+    };
+
+    const confirmPurchase = async () => {
+      const r = await api(`/api/items/${purchaseItem.value.id}/change`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          delta: purchaseData.value.delta,
+          price: purchaseData.value.price,
+          note: purchaseData.value.note,
+          is_purchase: true
+        })
+      });
+      if (r) {
+        purchaseItem.value.stock = r.new_stock;
+        showPurchase.value = false;
+        showToast('✅ 已入库');
+        loadStats();
+      }
+    };
+
+    const editItem = (item) => {
+      editingItem.value = item;
+      newItem.value = { ...item };
+      showAddItem.value = true;
+    };
+
+    const saveItem = async () => {
+      if (!newItem.value.name) { showToast('请输入名称'); return; }
+      if (!newItem.value.category_id) { showToast('请选择分类'); return; }
+      const fd = new FormData();
+      for (const k in newItem.value) {
+        if (newItem.value[k] !== null && newItem.value[k] !== undefined) {
+          fd.append(k, newItem.value[k]);
+        }
+      }
+      const url = editingItem.value ? `/api/items/${editingItem.value.id}` : '/api/items';
+      const method = editingItem.value ? 'PUT' : 'POST';
+      const r = await api(url, { method, body: fd });
+      if (r) {
+        showToast(editingItem.value ? '✅ 已更新' : '✅ 已添加');
+        closeAddItem();
+        loadItems();
+        loadCategories();
+        loadStats();
+      }
+    };
+
+    const closeAddItem = () => {
+      showAddItem.value = false;
+      editingItem.value = null;
+      newItem.value = { name: '', category_id: categories.value[0]?.id, stock: 0, min_stock: 1, unit: '个', price: 0, important: 0, note: '' };
+    };
+
+    const deleteItemConfirm = async () => {
+      if (!confirm(`确定删除「${editingItem.value.name}」？此操作不可撤销。`)) return;
+      const r = await api(`/api/items/${editingItem.value.id}`, { method: 'DELETE' });
+      if (r) {
+        showToast('🗑 已删除');
+        closeAddItem();
+        loadItems();
+        loadStats();
+      }
+    };
+
+    const saveCategory = async () => {
+      if (!newCategory.value.name) return;
+      const fd = new FormData();
+      fd.append('name', newCategory.value.name);
+      fd.append('icon', newCategory.value.icon);
+      const r = await api('/api/categories', { method: 'POST', body: fd });
+      if (r) {
+        showToast('✅ 分类已添加');
+        showAddCategory.value = false;
+        newCategory.value = { icon: '📦', name: '' };
+        loadCategories();
+      }
+    };
+
+    const addToShopping = async (item) => {
+      const fd = new FormData();
+      fd.append('item_id', item.id);
+      fd.append('quantity', Math.max(1, item.min_stock - item.stock));
+      const r = await api('/api/shopping', { method: 'POST', body: fd });
+      if (r) showToast(`✅ 已加入购物清单：${item.name}`);
+    };
+
+    const markShoppingDone = async (s) => {
+      await api(`/api/shopping/${s.id}/done`, { method: 'PUT' });
+      loadShopping();
+    };
+    const deleteShopping = async (s) => {
+      if (!confirm('确定删除？')) return;
+      await api(`/api/shopping/${s.id}`, { method: 'DELETE' });
+      loadShopping();
+    };
+
+    const triggerNotify = async () => {
+      const r = await api('/api/notify/check', { method: 'POST' });
+      if (r) {
+        if (r.low_count === 0) showToast('🎉 暂无低库存物品');
+        else if (r.sent) showToast(`✅ 已推送 ${r.low_count} 条提醒到微信`);
+        else showToast(`⚠️ 微信推送未配置，共 ${r.low_count} 条低库存`);
+      }
+    };
+
+    onMounted(async () => {
+      await loadMe();
+      if (!user.value.id) { location.href = '/login'; return; }
+      await loadCategories();
+      await loadItems();
+      await loadStats();
+    });
+
+    return {
+      user, trustedIp, currentTab, currentTabName, allTabs, visibleTabs, stats, categories, items, shoppingList,
+      purchases, logs, filterCategory, lowItems, filteredItems,
+      showAddItem, showAddCategory, showPurchase, editingItem,
+      newItem, newCategory, purchaseItem, purchaseData, toast,
+      accounts, visitorIp, smtpConfig, savingSmtp,
+      showAccountForm, editingAccount, accountForm,
+      switchTab, logout, changeStock, openPurchase, confirmPurchase,
+      editItem, saveItem, closeAddItem, deleteItemConfirm,
+      saveCategory, addToShopping, markShoppingDone, deleteShopping,
+      triggerNotify, formatTime,
+      fillCurrentIp, openAccountForm, saveAccount, deleteAccount,
+      saveSmtpConfig, testEmail
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

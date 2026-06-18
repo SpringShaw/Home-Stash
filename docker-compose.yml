@@ -1,0 +1,42 @@
+services:
+  home-stash:
+    build: .
+    image: home-stash:latest
+    container_name: home-stash
+    restart: unless-stopped
+    ports:
+      - "8081:8000"
+    volumes:
+      - /vol2/@apphome/trim.openclaw/data/workspace/home-stash/data:/app/data
+      - /vol2/@apphome/trim.openclaw/data/workspace/home-stash/logs:/app/logs
+      - /vol2/@apphome/trim.openclaw/data/workspace/home-stash/backups:/app/backups
+    environment:
+      - TZ=Asia/Shanghai
+      # 管理员账号配置（首次部署后请修改）
+      - ADMIN_ID=
+      - ADMIN_NAME=管理员
+      - ADMIN_PASSWORD=admin123
+      # 普通用户账号配置
+      - USER_ID=
+      - USER_NAME=用户
+      - USER_PASSWORD=user123
+      # 微信通知配置（请填入你的微信ID和AccountId）
+      - WECHAT_TARGET=
+      - WECHAT_ACCOUNT=
+      - OPENCLAW_GATEWAY=http://host.docker.internal:33970
+      # 定时提醒时间（每天 20:00）
+      - NOTIFY_HOUR=20
+      - NOTIFY_MINUTE=0
+      # IP白名单免密登录（逗号分隔IP，如 "192.168.31.100,192.168.31.101"）
+      # 留空则全部需要密码登录
+      - TRUSTED_IPS=
+      # 白名单默认登录用户（管理员账号ID）
+      - TRUSTED_USER=
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - default
+
+networks:
+  default:
+    name: home-stash-net
