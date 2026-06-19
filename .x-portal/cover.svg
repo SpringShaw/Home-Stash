@@ -1,40 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-  <title id="title">Home Stash project cover</title>
-  <desc id="desc">Track household supplies, low-stock reminders and shopping lists</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title">
+  <title id="title">家庭库存管理封面</title>
   <defs>
-    <radialGradient id="softGlow" cx="80%" cy="22%" r="62%">
-      <stop offset="0" stop-color="#22C55E" stop-opacity=".18"/>
-      <stop offset=".58" stop-color="#0EA5E9" stop-opacity=".08"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F7FBF7"/>
+      <stop offset="1" stop-color="#DCFCE7"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="72%" cy="28%" r="55%">
+      <stop offset="0" stop-color="#22C55E" stop-opacity=".22"/>
+      <stop offset=".55" stop-color="#0EA5E9" stop-opacity=".08"/>
       <stop offset="1" stop-color="#F7FBF7" stop-opacity="0"/>
     </radialGradient>
-    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#102018" flood-opacity=".14"/>
-    </filter>
   </defs>
-  <rect width="1200" height="630" rx="44" fill="#F7FBF7"/>
-  <rect width="1200" height="630" rx="44" fill="url(#softGlow)"/>
-  <path d="M70 96 C250 30 374 74 514 44 C658 12 746 54 864 34 C982 14 1074 52 1130 108" fill="none" stroke="#102018" stroke-opacity=".055" stroke-width="26" stroke-linecap="round"/>
-  <g filter="url(#shadow)">
-    <rect x="58" y="64" width="1084" height="502" rx="42" fill="white" fill-opacity=".76" stroke="white" stroke-width="2"/>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <g transform="translate(600 315)">
+    <circle cx="0" cy="0" r="148" fill="#FFFFFF" fill-opacity=".55"/>
+    <circle cx="0" cy="0" r="118" fill="#FFFFFF" fill-opacity=".72" stroke="#22C55E" stroke-width="6" stroke-opacity=".18"/>
+    <g transform="translate(-78 -82)">
+      <path d="M0 72 L78 8 L156 72" fill="none" stroke="#22C55E" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <rect x="18" y="72" width="120" height="92" rx="16" fill="#FFFFFF" stroke="#102018" stroke-width="6"/>
+      <rect x="38" y="92" width="36" height="28" rx="8" fill="#22C55E22" stroke="#22C55E" stroke-width="4"/>
+      <rect x="88" y="92" width="30" height="52" rx="8" fill="#0EA5E920" stroke="#0EA5E9" stroke-width="4"/>
+      <path d="M46 138 h64" stroke="#102018" stroke-width="6" stroke-linecap="round" opacity=".18"/>
+    </g>
   </g>
-  <g transform="translate(90 118)">
-    <rect x="0" y="0" width="58" height="58" rx="18" fill="#22C55E"/>
-    <circle cx="42" cy="16" r="10" fill="#0EA5E9"/>
-    <text x="78" y="24" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800" fill="#22C55E">SpringShaw/Home-Stash</text>
-    <text x="78" y="51" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="650" fill="#102018" opacity=".58">Home inventory for NAS</text>
-  </g>
-  <text x="90" y="262" font-family="Inter, Arial, sans-serif" font-size="68" font-weight="900" fill="#102018">Home Stash</text>
-  <text x="92" y="318" font-family="Inter, Arial, sans-serif" font-size="27" font-weight="650" fill="#102018" opacity=".70">Track household supplies, low-stock reminders and shopping lists</text>
-  <path d="M92 374 h390" stroke="#22C55E" stroke-width="10" stroke-linecap="round"/>
-  <path d="M92 399 h260" stroke="#0EA5E9" stroke-width="10" stroke-linecap="round" opacity=".65"/>
-  <rect x="90" y="482" width="137" height="44" rx="22" fill="white" stroke="#102018" stroke-opacity=".10"/><text x="109" y="511" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#102018" opacity=".72">Inventory</text><rect x="241" y="482" width="181" height="44" rx="22" fill="white" stroke="#102018" stroke-opacity=".10"/><text x="260" y="511" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#102018" opacity=".72">Shopping list</text><rect x="436" y="482" width="214" height="44" rx="22" fill="white" stroke="#102018" stroke-opacity=".10"/><text x="455" y="511" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#102018" opacity=".72">WeChat reminders</text><rect x="664" y="482" width="104" height="44" rx="22" fill="white" stroke="#102018" stroke-opacity=".10"/><text x="683" y="511" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#102018" opacity=".72">Docker</text>
-  
-        <g transform="translate(740 176)">
-          <rect x="58" y="122" width="250" height="210" rx="30" fill="white" stroke="#102018" stroke-width="8"/>
-          <path d="M44 156 L183 44 L322 156" fill="none" stroke="#22C55E" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
-          <rect x="96" y="176" width="72" height="54" rx="16" fill="#22C55E22" stroke="#22C55E" stroke-width="6"/>
-          <rect x="198" y="176" width="72" height="130" rx="18" fill="#0EA5E920" stroke="#0EA5E9" stroke-width="6"/>
-          <path d="M104 274 h74 M104 306 h120" stroke="#102018" stroke-width="8" stroke-linecap="round" opacity=".45"/>
-          <circle cx="246" cy="244" r="7" fill="#102018" opacity=".55"/>
-        </g>
+  <text x="1080" y="560" text-anchor="end" font-family="Inter, Arial, sans-serif" font-size="220" font-weight="900" fill="#22C55E" opacity=".07">H</text>
 </svg>
