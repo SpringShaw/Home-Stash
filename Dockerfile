@@ -12,7 +12,8 @@ RUN pip install --no-cache-dir \
     fastapi==0.115.0 \
     uvicorn[standard]==0.32.0 \
     python-multipart==0.0.12 \
-    pydantic==2.9.0
+    pydantic==2.9.0 \
+    bcrypt==4.2.1
 
 # 复制应用代码
 COPY app/ /app/
@@ -21,7 +22,7 @@ COPY app/ /app/
 RUN chmod +x /app/start.sh
 
 # 创建数据卷目录
-RUN mkdir -p /app/data /app/logs
+RUN mkdir -p /app/data /app/logs /app/backups
 
 EXPOSE 8000
 

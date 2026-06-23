@@ -12,6 +12,10 @@ services:
       - /vol2/@apphome/trim.openclaw/data/workspace/home-stash/backups:/app/backups
     environment:
       - TZ=Asia/Shanghai
+      # Docker 环境路径（覆盖默认的相对路径）
+      - DATA_DIR=/app/data
+      - LOG_DIR=/app/logs
+      - BACKUP_DIR=/app/backups
       # 管理员账号配置（首次部署后请修改）
       - ADMIN_ID=
       - ADMIN_NAME=管理员
@@ -32,6 +36,12 @@ services:
       - TRUSTED_IPS=
       # 白名单默认登录用户（管理员账号ID）
       - TRUSTED_USER=
+      # 自动备份配置（每天凌晨3点备份，保留最近7天）
+      - BACKUP_HOUR=3
+      - BACKUP_MINUTE=0
+      # 安全配置
+      - COOKIE_SECURE=false
+      - CORS_ORIGINS=
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
