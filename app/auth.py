@@ -105,6 +105,7 @@ def is_trusted_ip(client_ip: str) -> str:
         return ""
     with get_db() as conn:
         rows = conn.execute("SELECT id, bound_ips FROM accounts WHERE bound_ips != ''").fetchall()
+    # ① 检查账号级别的绑定 IP
     for r in rows:
         for entry in r["bound_ips"].split(","):
             entry = entry.strip()
@@ -115,7 +116,19 @@ def is_trusted_ip(client_ip: str) -> str:
                     return r["id"]
             except ValueError:
                 continue
-    return get_setting("trusted_user", "")
+    # ② 检查全局 IP 白名单（TRUSTED_IPS），命中则返回白名单默认用户
+    trusted_ips = get_setting("trusted_ips", "")
+    if trusted_ips:
+        for entry in trusted_ips.split(","):
+            entry = entry.strip()
+            if not entry:
+                continue
+            try:
+                if req_ip in ipaddress.ip_network(entry, strict=False):
+                    return get_setting("trusted_user", "")
+            except ValueError:
+                continue
+    return ""
 
 
 # ============= FastAPI 依赖注入 =============
