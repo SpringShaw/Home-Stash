@@ -72,6 +72,8 @@ async def admin_add_or_update_account(request: Request, user: dict = Depends(req
             _debug(f"校验失败: role={role} 无效")
             raise HTTPException(status_code=400, detail="无效的角色，只允许 admin 或 user")
 
+        action_type = ""
+        action_detail = ""
         _debug("开始数据库操作...")
         with get_db() as conn:
             existing = conn.execute("SELECT id FROM accounts WHERE id=?", (aid,)).fetchone()
@@ -89,8 +91,8 @@ async def admin_add_or_update_account(request: Request, user: dict = Depends(req
                         "UPDATE accounts SET name=?, role=?, bound_ips=? WHERE id=?",
                         (name, role, bound_ips, aid),
                     )
-                _debug("写入log_action...")
-                log_action(user, "修改账号", detail=f"{aid} {name} ({role}) bound_ips={bound_ips}")
+                action_type = "修改账号"
+                action_detail = f"{aid} {name} ({role}) bound_ips={bound_ips}"
             else:
                 if not password:
                     _debug("新增账号失败: 密码为空")
@@ -100,8 +102,10 @@ async def admin_add_or_update_account(request: Request, user: dict = Depends(req
                     "INSERT INTO accounts (id, name, password, role, bound_ips) VALUES (?, ?, ?, ?, ?)",
                     (aid, name, hash_password(password), role, bound_ips),
                 )
-                _debug("写入log_action...")
-                log_action(user, "新增账号", detail=f"{aid} {name} ({role})")
+                action_type = "新增账号"
+                action_detail = f"{aid} {name} ({role})"
+        _debug("数据库事务已提交，写入log_action...")
+        log_action(user, action_type, detail=action_detail)
         _debug("数据库操作完成，返回 ok")
     except HTTPException:
         raise
