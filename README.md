@@ -6,13 +6,13 @@
 
 ## 界面预览
 
-<img src="README.assets/PixPin_2026-06-23_14-18-04.png" alt="PixPin_2026-06-23_14-18-04" style="zoom:33%;" />
+<img src="./README.assets/PixPin_2026-06-23_14-18-04.png" alt="PixPin_2026-06-23_14-18-04" style="zoom:33%;" />
 
-<img src="README.assets/PixPin_2026-06-23_14-18-36.png" alt="PixPin_2026-06-23_14-18-36" style="zoom:33%;" />
+<img src="./README.assets/PixPin_2026-06-23_14-18-36.png" alt="PixPin_2026-06-23_14-18-36" style="zoom:33%;" />
 
-<img src="README.assets/PixPin_2026-06-23_14-19-21.png" alt="PixPin_2026-06-23_14-19-21" style="zoom:33%;" />
+<img src="./README.assets/PixPin_2026-06-23_14-19-21.png" alt="PixPin_2026-06-23_14-19-21" style="zoom:33%;" />
 
-<img src="README.assets/image-20260623144508398.png" alt="image-20260623144508398" style="zoom:50%;" />
+<img src="./README.assets/image-20260623144508398.png" alt="image-20260623144508398" style="zoom:50%;" />
 
 ## 功能特性
 

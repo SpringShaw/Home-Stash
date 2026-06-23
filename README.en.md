@@ -6,13 +6,13 @@ A lightweight home supplies inventory manager designed for home NAS devices. Sup
 
 ## Preview
 
-<img src="README.en.assets/PixPin_2026-06-23_14-20-26.png" alt="PixPin_2026-06-23_14-20-26" style="zoom:33%;" />
+<img src="./README.en.assets/PixPin_2026-06-23_14-20-26.png" alt="PixPin_2026-06-23_14-20-26" style="zoom:33%;" />
 
-<img src="README.en.assets/PixPin_2026-06-23_14-20-15.png" alt="PixPin_2026-06-23_14-20-15" style="zoom:33%;" />
+<img src="./README.en.assets/PixPin_2026-06-23_14-20-15.png" alt="PixPin_2026-06-23_14-20-15" style="zoom:33%;" />
 
-<img src="README.en.assets/PixPin_2026-06-23_14-20-04.png" alt="PixPin_2026-06-23_14-20-04" style="zoom:33%;" />
+<img src="./README.en.assets/PixPin_2026-06-23_14-20-04.png" alt="PixPin_2026-06-23_14-20-04" style="zoom:33%;" />
 
-<img src="README.en.assets/image-20260623144743918.png" alt="image-20260623144743918" style="zoom:50%;" />
+<img src="./README.en.assets/image-20260623144743918.png" alt="image-20260623144743918" style="zoom:50%;" />
 
 ## Features
 
