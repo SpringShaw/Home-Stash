@@ -84,6 +84,7 @@ environment:
 
 | 环境变量 | 默认值 | 说明 |
 |---------|--------|------|
+| APP_LANG | zh | 预设数据语言（zh=中文/em=英文），仅首次初始化时生效 |
 | DATA_DIR | ./data | 数据库存储目录 |
 | LOG_DIR | ./logs | 日志存储目录 |
 | BACKUP_DIR | ./backups | 备份存储目录 |

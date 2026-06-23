@@ -35,6 +35,15 @@ DEFAULT_CATEGORIES = [
     {"name": "医药健康", "icon": "💊", "items": ["创可贴", "感冒药", "维生素", "口罩", "消毒液"]},
 ]
 
+EN_DEFAULT_CATEGORIES = [
+    {"name": "Baby Care", "icon": "🧴", "items": ["Baby Wipes", "Cotton Wipes", "Facial Tissue", "Diapers", "Baby Laundry Detergent", "Fabric Softener"]},
+    {"name": "Bathroom", "icon": "🚿", "items": ["Shampoo", "Body Wash", "Conditioner", "Toothpaste", "Toilet Cleaner", "Laundry Detergent"]},
+    {"name": "Kitchen", "icon": "🍳", "items": ["Soy Sauce", "Dark Soy Sauce", "Salt", "Sugar", "Cooking Wine", "Vinegar", "Chicken Powder", "Oyster Sauce", "Vegetable Oil"]},
+    {"name": "Household", "icon": "🏠", "items": ["Facial Tissue", "Toilet Paper", "Trash Bags", "Plastic Wrap", "Batteries", "Light Bulbs"]},
+    {"name": "Food & Drinks", "icon": "🍞", "items": ["Rice", "Noodles", "Drinking Water", "Snacks"]},
+    {"name": "Health", "icon": "💊", "items": ["Band-Aids", "Cold Medicine", "Vitamins", "Face Masks", "Hand Sanitizer"]},
+]
+
 # ============= 数据库连接 =============
 @contextmanager
 def get_db():
@@ -273,10 +282,13 @@ def init_db():
             c.execute("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", (key, val))
         print("✅ 系统设置已就绪")
 
-        # 初始化默认分类和耗材
+        # 初始化默认分类和耗材（根据 APP_LANG 选择中/英文预设）
         c.execute("SELECT COUNT(*) as cnt FROM categories")
         if c.fetchone()["cnt"] == 0:
-            for idx, cat in enumerate(DEFAULT_CATEGORIES):
+            app_lang = os.getenv("APP_LANG", "zh")
+            cats = EN_DEFAULT_CATEGORIES if app_lang.startswith("en") else DEFAULT_CATEGORIES
+            default_unit = "pc" if app_lang.startswith("en") else "个"
+            for idx, cat in enumerate(cats):
                 c.execute(
                     "INSERT INTO categories (name, icon, sort_order) VALUES (?, ?, ?)",
                     (cat["name"], cat["icon"], idx),
@@ -285,6 +297,6 @@ def init_db():
                 for item in cat["items"]:
                     c.execute(
                         "INSERT INTO items (category_id, name, unit, stock, min_stock) VALUES (?, ?, ?, ?, ?)",
-                        (cat_id, item, "个", 0, 1),
+                        (cat_id, item, default_unit, 0, 1),
                     )
-            print(f"✅ 数据库已初始化，预设了 {len(DEFAULT_CATEGORIES)} 个分类")
+            print(f"✅ 数据库已初始化，预设了 {len(cats)} 个分类")

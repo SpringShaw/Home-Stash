@@ -12,6 +12,8 @@ services:
       - /vol2/@apphome/trim.openclaw/data/workspace/home-stash/backups:/app/backups
     environment:
       - TZ=Asia/Shanghai
+      # 预设数据语言（zh=中文，en=英文），首次初始化时生效
+      - APP_LANG=zh
       # Docker 环境路径（覆盖默认的相对路径）
       - DATA_DIR=/app/data
       - LOG_DIR=/app/logs
