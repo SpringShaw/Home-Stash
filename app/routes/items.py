@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, Depends, Form
 from auth import require_login, require_admin
 from database import get_db
 from models import StockChange
-from logs import log_action
+from routes.logs import log_action
 
 router = APIRouter(tags=["耗材"])
 

@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 
 from auth import require_admin
 from database import get_db, get_setting, set_setting, get_all_settings, get_all_accounts
-from logs import log_action
+from routes.logs import log_action
 
 router = APIRouter(prefix="/api/admin", tags=["管理员"])
 

@@ -52,6 +52,44 @@ def get_db():
         conn.close()
 
 
+# ============= 辅助查询函数 =============
+def get_account(user_id: str):
+    """根据 ID 查询单个账号"""
+    with get_db() as conn:
+        return conn.execute("SELECT * FROM accounts WHERE id=?", (user_id,)).fetchone()
+
+
+def get_setting(key: str, default: str = "") -> str:
+    """查询单条设置值"""
+    with get_db() as conn:
+        row = conn.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+    return row["value"] if row else default
+
+
+def set_setting(key: str, value: str):
+    """更新或插入设置"""
+    with get_db() as conn:
+        conn.execute(
+            "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=CURRENT_TIMESTAMP",
+            (key, value),
+        )
+
+
+def get_all_settings() -> dict:
+    """获取所有设置"""
+    with get_db() as conn:
+        rows = conn.execute("SELECT key, value FROM settings").fetchall()
+    return {r["key"]: r["value"] for r in rows}
+
+
+def get_all_accounts() -> list:
+    """获取所有账号（不含密码）"""
+    with get_db() as conn:
+        rows = conn.execute("SELECT id, name, role, bound_ips, created_at FROM accounts").fetchall()
+    return [dict(r) for r in rows]
+
+
 # ============= 表结构定义 =============
 TABLES_SQL = [
     """CREATE TABLE IF NOT EXISTS categories (

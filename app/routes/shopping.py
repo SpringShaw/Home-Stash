@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Form
 
 from auth import require_login
 from database import get_db
-from logs import log_action
+from routes.logs import log_action
 
 router = APIRouter(tags=["购物清单"])
 
