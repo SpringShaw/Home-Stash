@@ -23,14 +23,18 @@ def log_action(
     detail: str = "",
 ):
     """写操作日志（数据库 + 文件）"""
-    with get_db() as conn:
-        conn.execute(
-            """INSERT INTO action_logs
-               (user_id, user_name, action, item_id, item_name, old_value, new_value, detail)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (user["id"], user["name"], action, item_id, item_name,
-             str(old_value), str(new_value), detail),
-        )
+    try:
+        with get_db() as conn:
+            conn.execute(
+                """INSERT INTO action_logs
+                   (user_id, user_name, action, item_id, item_name, old_value, new_value, detail)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (user["id"], user["name"], action, item_id, item_name,
+                 str(old_value), str(new_value), detail),
+            )
+    except Exception as e:
+        print(f"[DEBUG {datetime.now().isoformat()}] log_action DB写入失败: {type(e).__name__}: {e}", flush=True)
+        import traceback; traceback.print_exc()
     line = f"[{datetime.now().isoformat()}] {user['name']}({user['id']}) {action} {item_name} {old_value}→{new_value} {detail}\n"
     try:
         with open(ACTION_LOG, "a", encoding="utf-8") as f:

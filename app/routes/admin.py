@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 """管理员路由：设置管理、账号管理"""
 
+import traceback
+from datetime import datetime
+
 from fastapi import APIRouter, HTTPException, Depends, Request
 
 from auth import require_admin
@@ -9,6 +12,9 @@ from database import get_db, get_setting, set_setting, get_all_settings, get_all
 from routes.logs import log_action
 
 router = APIRouter(prefix="/api/admin", tags=["管理员"])
+
+def _debug(msg):
+    print(f"[DEBUG {datetime.now().isoformat()}] {msg}", flush=True)
 
 
 # ===== 系统设置 =====
@@ -41,42 +47,68 @@ async def admin_list_accounts(user: dict = Depends(require_admin)):
 
 @router.post("/accounts")
 async def admin_add_or_update_account(request: Request, user: dict = Depends(require_admin)):
-    from auth import hash_password
+    _debug(f"=== /api/admin/accounts 请求开始, user={user} ===")
+    try:
+        from auth import hash_password
 
-    data = await request.json()
-    aid = data.get("id", "").strip()[:50]
-    name = data.get("name", "").strip()[:100]
-    password = data.get("password", "").strip()[:128]
-    role = data.get("role", "user")
-    bound_ips = data.get("bound_ips", "").strip()[:500]
+        raw_body = await request.body()
+        _debug(f"请求体(raw): {raw_body.decode('utf-8', errors='replace')}")
 
-    if not aid or not name:
-        raise HTTPException(status_code=400, detail="账号和用户名不能为空")
-    if role not in ("admin", "user"):
-        raise HTTPException(status_code=400, detail="无效的角色，只允许 admin 或 user")
+        data = await request.json()
+        _debug(f"请求体(JSON): {data}")
 
-    with get_db() as conn:
-        existing = conn.execute("SELECT id FROM accounts WHERE id=?", (aid,)).fetchone()
-        if existing:
-            if password:
-                conn.execute(
-                    "UPDATE accounts SET name=?, password=?, role=?, bound_ips=? WHERE id=?",
-                    (name, hash_password(password), role, bound_ips, aid),
-                )
+        aid = data.get("id", "").strip()[:50]
+        name = data.get("name", "").strip()[:100]
+        password = data.get("password", "").strip()[:128]
+        role = data.get("role", "user")
+        bound_ips = data.get("bound_ips", "").strip()[:500]
+
+        _debug(f"解析后: aid='{aid}' name='{name}' password='{password}' role='{role}' bound_ips='{bound_ips}'")
+
+        if not aid or not name:
+            _debug("校验失败: aid或name为空")
+            raise HTTPException(status_code=400, detail="账号和用户名不能为空")
+        if role not in ("admin", "user"):
+            _debug(f"校验失败: role={role} 无效")
+            raise HTTPException(status_code=400, detail="无效的角色，只允许 admin 或 user")
+
+        _debug("开始数据库操作...")
+        with get_db() as conn:
+            existing = conn.execute("SELECT id FROM accounts WHERE id=?", (aid,)).fetchone()
+            _debug(f"账号是否存在: {existing is not None}")
+            if existing:
+                if password:
+                    _debug(f"更新账号(含密码): {aid}")
+                    conn.execute(
+                        "UPDATE accounts SET name=?, password=?, role=?, bound_ips=? WHERE id=?",
+                        (name, hash_password(password), role, bound_ips, aid),
+                    )
+                else:
+                    _debug(f"更新账号(不含密码): {aid}")
+                    conn.execute(
+                        "UPDATE accounts SET name=?, role=?, bound_ips=? WHERE id=?",
+                        (name, role, bound_ips, aid),
+                    )
+                _debug("写入log_action...")
+                log_action(user, "修改账号", detail=f"{aid} {name} ({role}) bound_ips={bound_ips}")
             else:
+                if not password:
+                    _debug("新增账号失败: 密码为空")
+                    raise HTTPException(status_code=400, detail="新增账号必须设置密码")
+                _debug(f"新增账号: {aid}")
                 conn.execute(
-                    "UPDATE accounts SET name=?, role=?, bound_ips=? WHERE id=?",
-                    (name, role, bound_ips, aid),
+                    "INSERT INTO accounts (id, name, password, role, bound_ips) VALUES (?, ?, ?, ?, ?)",
+                    (aid, name, hash_password(password), role, bound_ips),
                 )
-            log_action(user, "修改账号", detail=f"{aid} {name} ({role}) bound_ips={bound_ips}")
-        else:
-            if not password:
-                raise HTTPException(status_code=400, detail="新增账号必须设置密码")
-            conn.execute(
-                "INSERT INTO accounts (id, name, password, role, bound_ips) VALUES (?, ?, ?, ?, ?)",
-                (aid, name, hash_password(password), role, bound_ips),
-            )
-            log_action(user, "新增账号", detail=f"{aid} {name} ({role})")
+                _debug("写入log_action...")
+                log_action(user, "新增账号", detail=f"{aid} {name} ({role})")
+        _debug("数据库操作完成，返回 ok")
+    except HTTPException:
+        raise
+    except Exception as e:
+        _debug(f"!!! 异常: {type(e).__name__}: {e}")
+        _debug(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"服务器内部错误: {type(e).__name__}: {e}")
     return {"ok": True}
 
 
