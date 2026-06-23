@@ -8,7 +8,7 @@
 <script src="/static/lib/vue.global.prod.js"></script>
 <style>
 body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
-.tab-active { color: #6366f1; }
+.tab-active { color: #0d9488; }
 .tab-active .tab-icon { transform: scale(1.15); }
 [v-cloak] { display: none; }
 .fade-enter-active, .fade-leave-active { transition: opacity .2s; }
@@ -19,7 +19,7 @@ img { -webkit-user-drag: none; user-select: none; }
 <body class="bg-gray-50 min-h-screen pb-20">
 <div id="app">
   <!-- 顶部栏 -->
-  <header class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white sticky top-0 z-30 shadow-md">
+  <header class="bg-gradient-to-r from-teal-600 to-emerald-500 text-white sticky top-0 z-30 shadow-md">
     <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="text-2xl">🏠</span>
@@ -63,7 +63,7 @@ img { -webkit-user-drag: none; user-select: none; }
         <div class="flex items-center justify-between mb-3">
           <h2 class="font-bold text-gray-800">🔥 低库存提醒</h2>
           <button v-if="user.role === 'admin'" @click="triggerNotify"
-            class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full hover:bg-indigo-200">
+            class="text-xs bg-teal-100 text-teal-700 px-3 py-1 rounded-full hover:bg-teal-200">
             📨 立即推送微信
           </button>
         </div>
@@ -82,7 +82,7 @@ img { -webkit-user-drag: none; user-select: none; }
             </div>
             <div class="text-right ml-2">
               <div class="font-bold text-red-500">{{ item.stock }}/{{ item.min_stock }}{{ item.unit }}</div>
-              <button @click="addToShopping(item)" class="text-xs text-indigo-600 hover:underline">+ 购物清单</button>
+              <button @click="addToShopping(item)" class="text-xs text-teal-600 hover:underline">+ 购物清单</button>
             </div>
           </div>
         </div>
@@ -101,12 +101,12 @@ img { -webkit-user-drag: none; user-select: none; }
     <!-- 耗材管理 -->
     <div v-if="currentTab === 'items'">
       <div class="flex items-center gap-2 overflow-x-auto pt-1.5 pb-2 mb-3 -mx-4 px-4">
-        <button @click="filterCategory = null" :class="filterCategory === null ? 'bg-indigo-500 text-white' : 'bg-white text-gray-700'"
+        <button @click="filterCategory = null" :class="filterCategory === null ? 'bg-teal-600 text-white' : 'bg-white text-gray-700'"
           class="px-3 py-1.5 rounded-full text-sm whitespace-nowrap shadow-sm">
           全部 ({{ items.length }})
         </button>
         <button v-for="cat in categories" :key="cat.id" @click="filterCategory = cat.id"
-          :class="filterCategory === cat.id ? 'bg-indigo-500 text-white' : 'bg-white text-gray-700'"
+          :class="filterCategory === cat.id ? 'bg-teal-600 text-white' : 'bg-white text-gray-700'"
           class="px-3 py-1.5 rounded-full text-sm whitespace-nowrap shadow-sm relative">
           {{ cat.icon }} {{ cat.name }}
           <span v-if="cat.low_count > 0" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">{{ cat.low_count }}</span>
@@ -114,7 +114,7 @@ img { -webkit-user-drag: none; user-select: none; }
       </div>
       <div class="flex gap-2 mb-3">
         <button @click="showAddItem = true"
-          class="flex-1 bg-indigo-500 text-white py-2 rounded-lg shadow-sm hover:bg-indigo-600">
+          class="flex-1 bg-teal-600 text-white py-2 rounded-lg shadow-sm hover:bg-teal-700">
           ➕ 添加耗材
         </button>
         <button @click="showAddCategory = true"
@@ -145,7 +145,7 @@ img { -webkit-user-drag: none; user-select: none; }
                 <button @click="changeStock(item, -1)"
                   class="w-7 h-7 bg-gray-100 hover:bg-gray-200 rounded text-sm font-bold">−</button>
                 <button @click="changeStock(item, 1)"
-                  class="w-7 h-7 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded text-sm font-bold">+</button>
+                  class="w-7 h-7 bg-teal-100 hover:bg-teal-200 text-teal-700 rounded text-sm font-bold">+</button>
                 <button @click="openPurchase(item)"
                   class="w-7 h-7 bg-green-100 hover:bg-green-200 text-green-700 rounded text-sm">🛒</button>
                 <button @click="addToShopping(item)"
@@ -220,7 +220,7 @@ img { -webkit-user-drag: none; user-select: none; }
             <div class="flex items-center justify-between">
               <span class="font-medium">
                 <span class="px-2 py-0.5 rounded text-xs"
-                  :class="log.user_name === 'Mr.X' ? 'bg-indigo-100 text-indigo-700' : 'bg-pink-100 text-pink-700'">
+                  :class="log.user_name === 'Mr.X' ? 'bg-teal-100 text-teal-700' : 'bg-pink-100 text-pink-700'">
                   {{ log.user_name }}
                 </span>
                 {{ log.action }}
@@ -245,7 +245,7 @@ img { -webkit-user-drag: none; user-select: none; }
       <div class="bg-white rounded-xl shadow-sm p-4 mb-3">
         <div class="flex items-center justify-between mb-3">
           <h2 class="font-bold text-gray-800">👥 账号管理</h2>
-          <button @click="openAccountForm()" class="text-xs bg-indigo-500 text-white px-3 py-1 rounded hover:bg-indigo-600">+ 新增账号</button>
+          <button @click="openAccountForm()" class="text-xs bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700">+ 新增账号</button>
         </div>
         <div class="space-y-2">
           <div v-for="a in accounts" :key="a.id" class="flex flex-col p-3 bg-gray-50 rounded-lg">
@@ -253,7 +253,7 @@ img { -webkit-user-drag: none; user-select: none; }
               <div>
                 <span class="font-medium">{{ a.name }}</span>
                 <span class="text-xs ml-2 px-2 py-0.5 rounded"
-                  :class="a.role === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-600'">
+                  :class="a.role === 'admin' ? 'bg-teal-100 text-teal-700' : 'bg-gray-200 text-gray-600'">
                   {{ a.role === 'admin' ? '管理员' : '普通用户' }}
                 </span>
                 <div class="text-xs text-gray-500 mt-1">ID: {{ a.id }}</div>
@@ -302,7 +302,7 @@ img { -webkit-user-drag: none; user-select: none; }
         </div>
         <button @click="saveSmtpConfig" :disabled="savingSmtp"
           class="mt-4 w-full py-2 rounded-xl font-medium text-white transition"
-          :class="savingSmtp ? 'bg-gray-400' : 'bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700'">
+          :class="savingSmtp ? 'bg-gray-400' : 'bg-gradient-to-r from-teal-600 to-emerald-500 hover:from-teal-700 hover:to-emerald-600'">
           {{ savingSmtp ? '保存中...' : '💾 保存邮件配置' }}
         </button>
       </div>
@@ -373,7 +373,7 @@ img { -webkit-user-drag: none; user-select: none; }
       <div class="flex gap-2 mt-5">
         <button v-if="editingItem && user.role === 'admin'" @click="deleteItemConfirm" class="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg">删除</button>
         <button @click="closeAddItem" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg">取消</button>
-        <button @click="saveItem" class="flex-1 px-3 py-2 bg-indigo-500 text-white rounded-lg">保存</button>
+        <button @click="saveItem" class="flex-1 px-3 py-2 bg-teal-600 text-white rounded-lg">保存</button>
       </div>
     </div>
   </div>
@@ -394,7 +394,7 @@ img { -webkit-user-drag: none; user-select: none; }
       </div>
       <div class="flex gap-2 mt-5">
         <button @click="showAddCategory = false" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg">取消</button>
-        <button @click="saveCategory" class="flex-1 px-3 py-2 bg-indigo-500 text-white rounded-lg">添加</button>
+        <button @click="saveCategory" class="flex-1 px-3 py-2 bg-teal-600 text-white rounded-lg">添加</button>
       </div>
     </div>
   </div>
@@ -455,15 +455,15 @@ img { -webkit-user-drag: none; user-select: none; }
           <label class="text-sm text-gray-600">绑定IP（留空=全部需密码登录）</label>
           <input v-model="accountForm.bound_ips" class="w-full px-3 py-2 border rounded-lg mt-1 font-mono text-sm"
             placeholder="如: 192.168.31.42, 192.168.31.100">
-          <div v-if="visitorIp" class="text-xs text-indigo-500 mt-1">
+          <div v-if="visitorIp" class="text-xs text-teal-500 mt-1">
             📱 当前设备IP: <span class="font-mono">{{ visitorIp }}</span>
-            <button v-if="visitorIp" @click="fillCurrentIp" class="ml-1 text-indigo-600 hover:underline">填入</button>
+            <button v-if="visitorIp" @click="fillCurrentIp" class="ml-1 text-teal-600 hover:underline">填入</button>
           </div>
         </div>
       </div>
       <div class="flex gap-2 mt-5">
         <button @click="showAccountForm = false" class="flex-1 px-3 py-2 bg-gray-100 rounded-lg">取消</button>
-        <button @click="saveAccount" class="flex-1 px-3 py-2 bg-indigo-500 text-white rounded-lg">保存</button>
+        <button @click="saveAccount" class="flex-1 px-3 py-2 bg-teal-600 text-white rounded-lg">保存</button>
       </div>
     </div>
   </div>
