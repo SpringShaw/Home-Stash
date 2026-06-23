@@ -95,39 +95,40 @@ def delete_session(token: str):
 
 
 # ============= IP 白名单 =============
+def _match_ip(req_ip: ipaddress.IPv4Address | ipaddress.IPv6Address, csv_list: str) -> bool:
+    """检查 req_ip 是否匹配逗号分隔的 IP/网段列表中的任意一项"""
+    if not csv_list:
+        return False
+    for entry in csv_list.split(","):
+        entry = entry.strip()
+        if not entry:
+            continue
+        try:
+            if req_ip in ipaddress.ip_network(entry, strict=False):
+                return True
+        except ValueError:
+            continue
+    return False
+
+
 def is_trusted_ip(client_ip: str) -> str:
-    """检查 IP 是否匹配账号绑定 IP，返回匹配的账号 ID"""
+    """检查 IP 是否匹配账号绑定 IP 或全局白名单，返回匹配的账号 ID"""
     if not client_ip:
         return ""
     try:
         req_ip = ipaddress.ip_address(client_ip)
     except ValueError:
         return ""
+    # ① 检查账号级别的绑定 IP
     with get_db() as conn:
         rows = conn.execute("SELECT id, bound_ips FROM accounts WHERE bound_ips != ''").fetchall()
-    # ① 检查账号级别的绑定 IP
     for r in rows:
-        for entry in r["bound_ips"].split(","):
-            entry = entry.strip()
-            if not entry:
-                continue
-            try:
-                if req_ip in ipaddress.ip_network(entry, strict=False):
-                    return r["id"]
-            except ValueError:
-                continue
+        if _match_ip(req_ip, r["bound_ips"]):
+            return r["id"]
     # ② 检查全局 IP 白名单（TRUSTED_IPS），命中则返回白名单默认用户
-    trusted_ips = get_setting("trusted_ips", "")
-    if trusted_ips:
-        for entry in trusted_ips.split(","):
-            entry = entry.strip()
-            if not entry:
-                continue
-            try:
-                if req_ip in ipaddress.ip_network(entry, strict=False):
-                    return get_setting("trusted_user", "")
-            except ValueError:
-                continue
+    trusted_user = get_setting("trusted_user", "")
+    if trusted_user and _match_ip(req_ip, get_setting("trusted_ips", "")):
+        return trusted_user
     return ""
 
 

@@ -449,7 +449,7 @@ const APP_I18N = {
     ipAlreadyBound: '该IP已在该账号绑定列表中', ipFilled: '已填入',
     purchaseStockIn: '已入库',
     loginFailed: '登录失败', networkError: '网络错误',
-    justNow: '刚刚', minutesAgo: '分钟前', hoursAgo: '小时前', daysAgo: '天前',
+    justNow: '刚刚', minutesAgo: '分钟前', hoursAgo: '小时前', daysAgo: '天前', operationFailed: '操作失败',
   },
   en: {
     pageTitle: 'Home Stash - Home Inventory',
@@ -489,7 +489,7 @@ const APP_I18N = {
     ipAlreadyBound: 'This IP is already in the bound list', ipFilled: 'IP added',
     purchaseStockIn: 'Stocked in',
     loginFailed: 'Login failed', networkError: 'Network error',
-    justNow: 'just now', minutesAgo: 'min ago', hoursAgo: 'hr ago', daysAgo: 'ddd ago',
+    justNow: 'just now', minutesAgo: 'min ago', hoursAgo: 'hr ago', daysAgo: 'ddd ago', operationFailed: 'Operation failed',
   }
 };
 
@@ -532,7 +532,6 @@ createApp({
 
     const showAddItem = ref(false); const showAddCategory = ref(false);
     const showPurchase = ref(false); const editingItem = ref(null);
-    const newItem = ref({ name: '', category_id: null, stock: 0, min_stock: 1, unit: '个', price: 0, important: 0, note: '' });
     const newCategory = ref({ icon: '📦', name: '' });
     const purchaseItem = ref(null); const purchaseData = ref({ delta: 1, price: 0, note: '' });
 
@@ -561,7 +560,7 @@ createApp({
     const api = async (url, opts = {}) => {
       const res = await fetch(url, { credentials: 'include', ...opts });
       if (res.status === 401) { location.href = '/login'; return null; }
-      if (!res.ok) { const err = await res.json().catch(() => ({detail: 'request failed'})); showToast(err.detail || 'Error'); throw new Error(err.detail); }
+      if (!res.ok) { const err = await res.json().catch(() => ({})); showToast(err.detail || t('operationFailed')); throw new Error(err.detail); }
       return res.json();
     };
 
@@ -644,7 +643,10 @@ createApp({
       const r = await api(url, { method, body: fd });
       if (r) { showToast(editingItem.value ? t('itemSaved') : t('itemAdded')); closeAddItem(); loadItems(); loadCategories(); loadStats(); }
     };
-    const closeAddItem = () => { showAddItem.value = false; editingItem.value = null; newItem.value = { name: '', category_id: categories.value[0]?.id, stock: 0, min_stock: 1, unit: '个', price: 0, important: 0, note: '' }; };
+    const getDefaultUnit = () => lang.value === 'zh' ? '个' : 'pc';
+    const defaultNewItem = () => ({ name: '', category_id: categories.value[0]?.id, stock: 0, min_stock: 1, unit: getDefaultUnit(), price: 0, important: 0, note: '' });
+    const newItem = ref(defaultNewItem());
+    const closeAddItem = () => { showAddItem.value = false; editingItem.value = null; newItem.value = defaultNewItem(); };
     const deleteItemConfirm = async () => {
       if (!confirm(lang.value === 'zh' ? `确定删除「${editingItem.value.name}」？此操作不可撤销。` : `Delete "${editingItem.value.name}"? This cannot be undone.`)) return;
       const r = await api(`/api/items/${editingItem.value.id}`, { method:'DELETE' }); if (r) { showToast(t('itemDeleted')); closeAddItem(); loadItems(); loadStats(); }
@@ -653,7 +655,7 @@ createApp({
     const addToShopping = async (item) => { const fd = new FormData(); fd.append('item_id', item.id); fd.append('quantity', Math.max(1, item.min_stock - item.stock)); const r = await api('/api/shopping', { method:'POST', body: fd }); if (r) showToast(t('addedToList') + item.name); };
     const markShoppingDone = async (s) => { await api(`/api/shopping/${s.id}/done`, { method:'PUT' }); loadShopping(); };
     const deleteShopping = async (s) => { if (!confirm(lang.value === 'zh' ? '确定删除？' : 'Delete this item?')) return; await api(`/api/shopping/${s.id}`, { method:'DELETE' }); loadShopping(); };
-    const triggerNotify = async () => { const r = await api('/api/notify/check', { method:'POST' }); if (r) { if (r.low_count === 0) showToast(t('noLowStockNow')); else if (r.sent) showToast(t('wechatPushed') + r.low_count + t('wechatItemsSent')); else showToast(t('wechatNotConfigured') + r.low_count + t('itemsStockLow')); } };
+    const triggerNotify = async () => { const r = await api('/api/notify/check', { method:'POST' }); if (r) { if (r.low_count === 0) showToast(t('noLowStockNow')); else if (r.sent) showToast(t('wechatPushed') + ' ' + r.low_count + ' ' + t('wechatItemsSent')); else showToast(t('wechatNotConfigured') + ' ' + r.low_count + ' ' + t('itemsStockLow')); } };
 
     onMounted(async () => {
       document.title = t('pageTitle');
