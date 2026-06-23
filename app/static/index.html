@@ -265,7 +265,7 @@ img { -webkit-user-drag: none; user-select: none; }
   </nav>
 
   <!-- Add/Edit Item Modal -->
-  <div v-if="showAddItem" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" @click.self="showAddItem = false">
+  <div v-if="showAddItem" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" @mousedown="overlayMousedown = $event.target" @click="closeOverlay($event, () => showAddItem = false)">
     <div class="bg-white rounded-2xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
       <h3 class="text-lg font-bold mb-4">{{ editingItem ? t('editItemTitle') : t('addItemTitle') }}</h3>
       <div class="space-y-3">
@@ -317,7 +317,7 @@ img { -webkit-user-drag: none; user-select: none; }
   </div>
 
   <!-- Add Category Modal -->
-  <div v-if="showAddCategory" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" @click.self="showAddCategory = false">
+  <div v-if="showAddCategory" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" @mousedown="overlayMousedown = $event.target" @click="closeOverlay($event, () => showAddCategory = false)">
     <div class="bg-white rounded-2xl w-full max-w-sm p-6">
       <h3 class="text-lg font-bold mb-4">{{ t('addCategoryTitle') }}</h3>
       <div class="space-y-3">
@@ -338,7 +338,7 @@ img { -webkit-user-drag: none; user-select: none; }
   </div>
 
   <!-- Purchase Modal -->
-  <div v-if="showPurchase" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" @click.self="showPurchase = false">
+  <div v-if="showPurchase" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" @mousedown="overlayMousedown = $event.target" @click="closeOverlay($event, () => showPurchase = false)">
     <div class="bg-white rounded-2xl w-full max-w-sm p-6">
       <h3 class="text-lg font-bold mb-4">{{ t('purchaseIn') }}</h3>
       <div class="text-sm text-gray-500 mb-3">{{ purchaseItem?.name }}（{{ t('currentStock') }} {{ purchaseItem?.stock }}{{ purchaseItem?.unit }}）</div>
@@ -364,7 +364,7 @@ img { -webkit-user-drag: none; user-select: none; }
   </div>
 
   <!-- Account Modal -->
-  <div v-if="showAccountForm" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" @click.self="showAccountForm = false">
+  <div v-if="showAccountForm" class="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4" @mousedown="overlayMousedown = $event.target" @click="closeOverlay($event, () => showAccountForm = false)">
     <div class="bg-white rounded-2xl w-full max-w-sm p-6">
       <h3 class="text-lg font-bold mb-4">{{ editingAccount ? t('editAccountTitle') : t('addAccountTitle') }}</h3>
       <div class="space-y-3">
@@ -529,6 +529,9 @@ createApp({
     const stats = ref({}); const categories = ref([]); const items = ref([]);
     const shoppingList = ref([]); const purchases = ref([]); const logs = ref([]);
     const filterCategory = ref(null);
+
+    const overlayMousedown = ref(null);
+    const closeOverlay = (e, cb) => { if (overlayMousedown.value === e.target) cb(); };
 
     const showAddItem = ref(false); const showAddCategory = ref(false);
     const showPurchase = ref(false); const editingItem = ref(null);
