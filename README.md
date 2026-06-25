@@ -2,17 +2,17 @@
 
 [English](./README.en.md) | **简体中文**
 
-一个为家庭 NAS 设计的轻量耗材库存管理系统，支持**多用户操作留痕、微信/邮件自动提醒、数据库自动备份**，Docker 一键部署，同时兼容裸机 Linux。
+> 一个为家庭 NAS 设计的**轻量耗材库存管理系统**，支持**多用户操作留痕、微信/邮件自动提醒、数据库自动备份**，Docker 一键部署，同时兼容裸机 Linux。
 
 ## 界面预览
 
-<img src="./README.assets/PixPin_2026-06-23_14-18-04.png" alt="PixPin_2026-06-23_14-18-04" style="zoom:33%;" />
+<img src="./README.assets/screenshot-zh-dashboard.png" alt="看板" style="zoom:33%;" />
 
-<img src="./README.assets/PixPin_2026-06-23_14-18-36.png" alt="PixPin_2026-06-23_14-18-36" style="zoom:33%;" />
+<img src="./README.assets/screenshot-zh-items.png" alt="耗材列表" style="zoom:33%;" />
 
-<img src="./README.assets/PixPin_2026-06-23_14-19-21.png" alt="PixPin_2026-06-23_14-19-21" style="zoom:33%;" />
+<img src="./README.assets/screenshot-zh-shopping.png" alt="购物清单" style="zoom:33%;" />
 
-<img src="./README.assets/image-20260623144508398.png" alt="image-20260623144508398" style="zoom:50%;" />
+<img src="./README.assets/screenshot-zh-mobile.png" alt="手机端" style="zoom:50%;" />
 
 ## 功能特性
 
@@ -245,6 +245,6 @@ cp data/stash.db backups/stash_$(date +%Y%m%d).db
 - 预设数据支持中/英两套模板（通过 `APP_LANG` 环境变量控制）
 - 用户手动切换语言后，选择会持久保存
 
-## 📄 License
+## 📄 许可证
 
-MIT
+[MIT License](LICENSE)

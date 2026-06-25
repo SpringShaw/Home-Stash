@@ -2,17 +2,17 @@
 
 **English** | [简体中文](./README.md)
 
-A lightweight home supplies inventory manager designed for home NAS devices. Supports **multi-user action tracking, WeChat/email auto-notifications, automatic database backups**, with Docker one-click deployment and bare-metal Linux compatibility.
+> A lightweight home supplies inventory manager designed for home NAS devices. Supports **multi-user action tracking, WeChat/email auto-notifications, automatic database backups**, with Docker one-click deployment and bare-metal Linux compatibility.
 
 ## Preview
 
-<img src="./README.en.assets/PixPin_2026-06-23_14-20-26.png" alt="PixPin_2026-06-23_14-20-26" style="zoom:33%;" />
+<img src="./README.en.assets/screenshot-en-dashboard.png" alt="Dashboard" style="zoom:33%;" />
 
-<img src="./README.en.assets/PixPin_2026-06-23_14-20-15.png" alt="PixPin_2026-06-23_14-20-15" style="zoom:33%;" />
+<img src="./README.en.assets/screenshot-en-items.png" alt="Items" style="zoom:33%;" />
 
-<img src="./README.en.assets/PixPin_2026-06-23_14-20-04.png" alt="PixPin_2026-06-23_14-20-04" style="zoom:33%;" />
+<img src="./README.en.assets/screenshot-en-shopping.png" alt="Shopping List" style="zoom:33%;" />
 
-<img src="./README.en.assets/image-20260623144743918.png" alt="image-20260623144743918" style="zoom:50%;" />
+<img src="./README.en.assets/screenshot-en-mobile.png" alt="Mobile" style="zoom:50%;" />
 
 ## Features
 
@@ -247,4 +247,4 @@ cp data/stash.db backups/stash_$(date +%Y%m%d).db
 
 ## 📄 License
 
-MIT
+[MIT License](LICENSE)

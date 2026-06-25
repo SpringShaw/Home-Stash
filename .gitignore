@@ -23,11 +23,15 @@ fix_items.py
 # 调试文件
 debug.html
 
-# 敏感图片
+# 敏感图片（README截图除外）
 *.jpg
 *.png
 *.gif
 *.webp
+!README.assets/*.png
+!README.assets/*.jpg
+!README.en.assets/*.png
+!README.en.assets/*.jpg
 
 # 错误目录名
 {data,logs,backups}/
